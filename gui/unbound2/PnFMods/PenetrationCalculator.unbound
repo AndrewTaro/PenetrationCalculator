@@ -50,8 +50,6 @@
 		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
 		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
 		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : -1")
-		
-		(var isRicochetVisible:bool = "alwaysRicochet > 0 && startRicochet > 0")
 
 		# For Rage Mode Gauge
 		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
@@ -100,9 +98,6 @@
 			_animationTrigger = "isBattleStartAnimationTriggered"
 
 			(bind visible "isPenetrationVisible")
-			(style
-				(bind hitTest "isRicochetVisible")
-			)
 		)
 		(controller $Tooltip
 			(renderer='PenetrationCalculatorTooltipItem')
@@ -202,6 +197,7 @@
 
 		# Angle Indicator
 		(block
+			(bind visible "isRicochetVisible")
 			(style
 				(width = 120px)
 				(height = 120px)
@@ -303,7 +299,8 @@
 	(scope
 		(var normOffset:number = "_offset % 360")
 		(var isLeft:bool = "90 <= normOffset && normOffset <= 270 ? true : false")
-		(var rad:number = "gradToRad(_offset + _angle)")
+		(var angleWithOffset:number = "_offset + _angle")
+		(var rad:number = "gradToRad(angleWithOffset)")
 		(var xEnd:number = "cos(rad) * _length")
 		(var yEnd:number = "sin(rad) * _length")
 		(var label:str = "floor(_angle) != _angle ? formatFloatingPoint(_angle, 1) : _angle")
@@ -313,8 +310,11 @@
 		(.graphics
 			(lineStyle "1" "0xFFFFFFFF")
 			(moveTo "0" "0")
-			(lineTo "xEnd" "yEnd")
+			(lineTo "_length" "0")
 			(endFill)
+		)
+		(style
+			(bind rotation "angleWithOffset")
 		)
 	)
 
