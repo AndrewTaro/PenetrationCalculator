@@ -1,4 +1,32 @@
-(def constant PI_COMPONENT_KEY 'modPenetrationCalculator')
+(def constant PENCALC_COMPONENT_KEY 'modPenetrationCalculator')
+(def constant TT_PENCALCULATOR_INSTALLED true) #for modconfig
+
+(def constant PENCALC_PREFS {
+	IMPACT_ANGLE_ALWAYS_VISIBLE	: {KEY: 'penCalcImpactAngleAlwaysVisible',		DEFAULT: false}, # Always Show Impact Angle
+	FONT_STYLE_INDEX			: {KEY: 'penCalcFontStyleIndex',				DEFAULT: 0,	MODIFIER: 1, OFFSET: 0}, # Font Style
+	HEIGHT_OFFSET				: {KEY: 'penCalcHeightOffset',					DEFAULT: 1,	MODIFIER: 1, OFFSET: 1}, # Row Index
+})
+
+(def constant PENCALC_FONT_COLORS [
+	"FONT_CLASS_TO_COLOR['$FontColorDefault']",
+	"FONT_CLASS_TO_COLOR['$FontColorBuoyancy']",
+	"FONT_CLASS_TO_COLOR['$FontColorGolden']",
+	"FONT_CLASS_TO_COLOR['$FontColorGreen']",
+	"FONT_CLASS_TO_COLOR['$FontColorOrange']",
+])
+
+(def macro PENCALC_GET_USERPREF()
+	(var userPrefsComponent:gfx = "$datahub.getSingleComponent(CC.userPrefs)")
+	(var userPrefsNum:gfx = "userPrefsComponent.userPrefs.chatBoxWidth" watch=false (event "userPrefsComponent.evUserPrefsChanged"))
+)
+
+(def macro PENCALC_GET_PREF_NUMBER (_varName:expression, _pref:expression)
+	(var name="_varName" type=number value="userPrefsNum && isNumber(userPrefsNum[_pref.KEY]) ? _pref.OFFSET + (round(userPrefsNum[_pref.KEY]) * _pref.MODIFIER) : _pref.DEFAULT")
+)
+
+(def macro PENCALC_GET_PREF_BOOL (_varName:expression, _pref:expression)
+	(var name="_varName" type=bool value="userPrefsNum && isNumber(userPrefsNum[_pref.KEY]) ? round(userPrefsNum[_pref.KEY]) : _pref.DEFAULT")
+)
 
 (def element PenetrationCalculator() layout=true
 	(scope
@@ -38,20 +66,55 @@
 
 (def element PenetrationCalculatorItem() layout=true
 	(scope
-		(var penEntityWatcher:gfx = "$datahub.getPrimWatcher(CC.mods_DataComponent, PI_COMPONENT_KEY)")
+		# Camera
+		(var cameraEntity:gfx = "$datahub.getSingleEntity(CC.camera)")
+		(var altVision:bool = "cameraEntity.camera.altVision" (event "cameraEntity.camera.evAltVisionChanged"))
+
+		# UserPrefs
+		(macro PENCALC_GET_USERPREF)
+
+		(macro PENCALC_GET_PREF_NUMBER _varName="'heightOffset'" 				_pref="PENCALC_PREFS.HEIGHT_OFFSET")
+		(macro PENCALC_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 		_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
+
+		(macro PENCALC_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
+
+		# Font style
+		(var fontStyleIndex:number = "fontStylePrefIndex < PENCALC_FONT_COLORS.length ? fontStylePrefIndex : 0")
+		(var fontColor:number = "PENCALC_FONT_COLORS[fontStyleIndex]")
+
+		# Pen Data Entity
+		(var penEntityWatcher:gfx = "$datahub.getPrimWatcher(CC.mods_DataComponent, PENCALC_COMPONENT_KEY)")
 		(var penEntity:gfx = "penEntityWatcher.entity" (event "penEntityWatcher.event"))
 		(var penDataComponent:gfx = "penEntity ? penEntity.mods_DataComponent : null")
 		(var penData:dict = "penDataComponent ? penDataComponent.data : {}" (event "penDataComponent.evDataChanged"))
 
+		# Data
 		(var penetration:number = "'penetration' in penData ? penData.penetration : -1" (event "evEnterFrame"))
 		(var penetrationText:str = "round(penetration)")
 		(var isPenetrationVisible:bool = "penetration > 0")
 
+		# Ricochet Angles
 		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
 		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
 		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : -1")
+		(var impactAngleText:str = "formatFloatingPoint(impactAngle, 2)")
+		(var isImpactAngleVisible:bool = "impactAngle > 0")
 
-		# For Rage Mode Gauge
+		# First Row Item
+		# - Adaptive
+		#	- Default: Pen
+		#	- Alt	 : Angle
+		# - Always
+		#	- Default: Pen
+		#	- Alt	 : Pen
+		#
+		# Don't show the impact angle when penetration is not available
+		(var isAdptiveMode:bool = "isPenetrationVisible && !isImpactAngleAlwaysVisible && altVision && isImpactAngleVisible")
+		(var firstRowText:str =	"isAdptiveMode ? impactAngleText : penetrationText")
+		(var firstRowMeasure:str = "isAdptiveMode ? '°' : 'mm'")
+		(var firstRowIcon:str = "isAdptiveMode ? 'angle_indicator' : 'penetration_indicator'")
+
+		# For Rage Mode Gauge and Offset
 		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
 		(var selfVehicleEntity:gfx = "selfVehicleWatcher.entity" (event "selfVehicleWatcher.event"))
 		(var vehicleID:number = "selfVehicleEntity ? selfVehicleEntity.vehicle.id : 0")
@@ -79,25 +142,48 @@
 		(var battleDataEntity:gfx = "$datahub.getSingleEntity(CC.battleData)")
 		(var isBattleStarted:bool = "battleDataEntity.battleState.battleState == SC.Common.CLIENT_BATTLE_STATE.STARTED" (event "battleDataEntity.battleState.evBattleStateChanged"))
 		(var isBattleStartAnimationTriggered:bool = "isBattleStarted")
+		#
 	)
 
 	(block
 		(style
 			(position = "absolute")
 			(bind right "19 + arcOffset")
-			(bind top "14 + 20") # Add +20 px for each row
+			(bind top "14 + 20 * heightOffset") # Add +20 px for each row
 			(width = 200)
 			(align = "right")
 		)
 		
 		(element PenetrationCalculatorTextItem
-			_value	 = "penetrationText"
-			_measure = 'mm'
-			_animationIndex = 1
-			_rightAligned = "true"
+			_iconName= "firstRowIcon"
+			_value	 = "firstRowText"
+			_measure = "firstRowMeasure"
+			_fontColor = "fontColor"
+			_animationIndex = "heightOffset"
 			_animationTrigger = "isBattleStartAnimationTriggered"
 
 			(bind visible "isPenetrationVisible")
+		)
+		# (element PenetrationCalculatorTextItem
+		# 	_iconName= 'angle_indicator'
+		# 	_value	 = "impactAngle"
+		# 	_measure = '°'
+		# 	_fontColor = "fontColor"
+		# 	_animationIndex = "heightOffset + 1"
+		# 	_animationTrigger = "isBattleStartAnimationTriggered"
+
+		# 	(bind visible "isImpactAngleAlwaysVisible && isImpactAngleVisible")
+		# )
+		(controller $Instance renderer='PenetrationCalculatorTextItem'
+			(bind enabled "isImpactAngleAlwaysVisible && isImpactAngleVisible")
+			(args
+				_iconName= 'angle_indicator'
+				_value	 = "impactAngle"
+				_measure = '°'
+				_fontColor = "fontColor"
+				_animationIndex = "heightOffset + 1"
+				_animationTrigger = "isBattleStartAnimationTriggered"
+			)
 		)
 		(controller $Tooltip
 			(renderer='PenetrationCalculatorTooltipItem')
@@ -113,20 +199,25 @@
 )
 
 
-(def element PenetrationCalculatorTextItem (_value:str, _measure:str, _animationIndex:number, _rightAligned:bool = false, _animationTrigger:bool = false) layout=true
+(def element PenetrationCalculatorTextItem (_iconName:str, _value:str, _measure:str, _fontColor:number, _animationIndex:number, _animationTrigger:bool = false) layout=true
 	(scope
-		(var _index:number = "_animationIndex")
+		(var _index:number = "_animationIndex" watch=false)
 	)
-	(style (flow = "horizontal") (marginTop = -5))
+	(style
+		(flow = "Flow.HORIZONTAL")
+		(marginTop = -5)
+	)
 
 	(hblock
-		(style (marginTop = 2))
+		(style
+			(marginTop = 2)
+		)
 		(tf
 			(class $TextIndicator)
 			(bind text "_value")
 			(style
-				(width = 40)
-				(textAlign = "right") #without these width and align, the icon below moves when num of digits change. ??
+				(bind textColor "_fontColor")
+				#(textAlign = "right") #without these width and align, the icon below moves when num of digits change. ??
 			)
 		)
 		(tf
@@ -135,20 +226,20 @@
 			(style
 				(letterSpacing = "-1")
 				(scaleX = 0.85)
+				(bind textColor "_fontColor")
 			)
-			(text = "_measure")
+			(bind text "_measure")
 		)
-		(macro CROSS_SHOW_ANIMATION "_rightAligned ? _animationIndex : _animationIndex + 0.5" "_animationTrigger")
+		(macro CROSS_SHOW_ANIMATION "_index" "_animationTrigger")
 	)
 	(block
-		(bind visible "_rightAligned")
 		(style
-			(bind backgroundImage "'url:../../../PnFMods/PenetrationCalculatorPy/penetration_indicator.png'")
-			(width = 26) (height = 26)
-			(scaleX = 0.66) (scaleY = 0.66)
+			(bind backgroundImage "'url:../../../PnFMods/PenetrationCalculatorPy/' + _iconName + '.png'")
+			(width = 19) (height = 19)
+			(backgroundSize = "fill")
 			(marginTop = 4)
 		)
-		(macro CROSS_SHOW_ANIMATION "_animationIndex + 0.5" "_animationTrigger")
+		(macro CROSS_SHOW_ANIMATION "_index + 0.5" "_animationTrigger")
 	)
 )
 
