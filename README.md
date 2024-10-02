@@ -1,9 +1,10 @@
 # Penetration Calculator
 This modification displays the penetration capability of your current armament at the aiming distance.
+Hovering the mouse over the indicator, a tooltip appears to show the ricochet angles and falling angle of your shell.
 
 # Overview
-![image](https://github.com/AndrewTaro/PenetrationCalculator/assets/36262823/2fcd9764-910c-4230-9d42-6f457b4a7100)
 ![image](https://github.com/AndrewTaro/PenetrationCalculator/assets/36262823/e9d7d00b-35fb-4503-975c-9a985d4fd104)
+![image](https://github.com/user-attachments/assets/2f0eb2c0-8142-4020-9007-90416129c522)
 
 # Install
 1. Download a zip.
