@@ -1,0 +1,333 @@
+(def constant PI_COMPONENT_KEY 'modPenetrationCalculator')
+
+(def element PenetrationCalculator() layout=true
+	(scope
+		(var stageComponent:gfx = "$datahub.getSingleComponent(CC.stage)")
+		(var stageWidth:number = "stageComponent.width" (event "stageComponent.evStageSizeChanged"))
+		(var stageHeight:number = "stageComponent.height" (event "stageComponent.evStageSizeChanged"))
+
+		(var cameraEntity:gfx = "$datahub.getSingleEntity(CC.camera)")
+		(var cameraMode:number = "cameraEntity.camera.mode" (event "cameraEntity.camera.evModeChanged"))
+		(var isCameraTrackingShell:bool = "cameraMode == CameraMode.SHELLTRACKER")
+
+		(var avatar:gfx = "$datahub.getSingleEntity(CC.playerAvatar)")
+		(var healthComponent:gfx = "avatar ? avatar.health : null")
+		(var isAlive:bool = "healthComponent ? healthComponent.isAlive : false" (event "healthComponent.evIsAliveChanged"))
+
+		(var aircarrier:gfx = "$datahub.getSingleComponent(CC.aircarrier)")
+		(var squadronCameraMode:str = "aircarrier ? aircarrier.squadronCameraMode : ''" (event "aircarrier.evSquadronCameraModeChanged"))
+		(var isLastLookCamera:bool = "aircarrier && (squadronCameraMode != SquadronCameraModes.DEFAULT)")
+
+		(var isCrosshairVisible:bool = "isAlive && !(isCameraTrackingShell) && !(isLastLookCamera)")
+	)
+
+	(style
+		(position = "absolute")
+		(bind width "stageWidth")
+		(bind height "stageHeight")
+	)
+
+	(controller $Instance renderer='PenetrationCalculatorItem'
+		(bind enabled "isAlive")
+		(exprs
+			(style (position = "absolute") (left = 50%) (top = 50%))
+			(bind visible "isCrosshairVisible")
+		)
+	)
+)
+
+(def element PenetrationCalculatorItem() layout=true
+	(scope
+		(var penEntityWatcher:gfx = "$datahub.getPrimWatcher(CC.mods_DataComponent, PI_COMPONENT_KEY)")
+		(var penEntity:gfx = "penEntityWatcher.entity" (event "penEntityWatcher.event"))
+		(var penDataComponent:gfx = "penEntity ? penEntity.mods_DataComponent : null")
+		(var penData:dict = "penDataComponent ? penDataComponent.data : {}" (event "penDataComponent.evDataChanged"))
+
+		(var penetration:number = "'penetration' in penData ? penData.penetration : -1" (event "evEnterFrame"))
+		(var penetrationText:str = "round(penetration)")
+		(var isPenetrationVisible:bool = "penetration > 0")
+
+		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
+		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
+		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : -1")
+		
+		(var isRicochetVisible:bool = "alwaysRicochet > 0 && startRicochet > 0")
+
+		# For Rage Mode Gauge
+		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
+		(var selfVehicleEntity:gfx = "selfVehicleWatcher.entity" (event "selfVehicleWatcher.event"))
+		(var vehicleID:number = "selfVehicleEntity ? selfVehicleEntity.vehicle.id : 0")
+
+		(var rageModesCollection:gfx = "$datahub.getCollection(CC.rageMode)")
+		(var rageModeEntity:gfx = "selfVehicleEntity ? $datahub.getPrimaryEntity(CC.rageMode, vehicleID) : null"
+										(event "rageModesCollection.evAdded")
+										(event "rageModesCollection.evRemoved")
+										(event "rageModesCollection.evUpdated")
+		)
+
+		(var controller:gfx = "selfVehicleEntity ? selfVehicleEntity.weaponController : null" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
+		(var weaponType:number = "controller ? controller.selectedWeapon
+													: SC.Ships.SHIP_WEAPON_TYPES.NONE" (event "controller.evSelectedWeaponChanged"))
+
+		(var altFireModeEntity:gfx = "$datahub.getSingleEntity(CC.altFireMode)")
+
+		(var isBurstFireGageVisible:bool = "altFireModeEntity != null && weaponType == SC.Ships.SHIP_WEAPON_TYPES.ARTILLERY")
+		(var isRageModeGageVisible:bool = "rageModeEntity != null && weaponType == SC.Ships.SHIP_WEAPON_TYPES.ARTILLERY")
+
+		(var isAddIndicatorOffset:bool = "(isRageModeGageVisible || isBurstFireGageVisible)")
+
+		(var arcOffset:number = "isAddIndicatorOffset ? OFFSET_ARC : 0" watch=false)
+
+		(var battleDataEntity:gfx = "$datahub.getSingleEntity(CC.battleData)")
+		(var isBattleStarted:bool = "battleDataEntity.battleState.battleState == SC.Common.CLIENT_BATTLE_STATE.STARTED" (event "battleDataEntity.battleState.evBattleStateChanged"))
+		(var isBattleStartAnimationTriggered:bool = "isBattleStarted")
+	)
+
+	(block
+		(style
+			(position = "absolute")
+			(bind right "19 + arcOffset")
+			(bind top "14 + 20") # Add +20 px for each row
+			(width = 200)
+			(align = "right")
+		)
+		
+		(element PenetrationCalculatorTextItem
+			_value	 = "penetrationText"
+			_measure = 'mm'
+			_animationIndex = 1
+			_rightAligned = "true"
+			_animationTrigger = "isBattleStartAnimationTriggered"
+
+			(bind visible "isPenetrationVisible")
+			(style
+				(bind hitTest "isRicochetVisible")
+			)
+		)
+		(controller $Tooltip
+			(renderer='PenetrationCalculatorTooltipItem')
+			(args
+				_alwaysRicochet="alwaysRicochet"
+				_startRicochet="startRicochet"
+				_impactAngle="impactAngle"
+			)
+			(macro DEFAULT_TOOLTIP_BEHAVIOUR "0")
+		)
+		#
+	)
+)
+
+
+(def element PenetrationCalculatorTextItem (_value:str, _measure:str, _animationIndex:number, _rightAligned:bool = false, _animationTrigger:bool = false) layout=true
+	(scope
+		(var _index:number = "_animationIndex")
+	)
+	(style (flow = "horizontal") (marginTop = -5))
+
+	(hblock
+		(style (marginTop = 2))
+		(tf
+			(class $TextIndicator)
+			(bind text "_value")
+			(style
+				(width = 40)
+				(textAlign = "right") #without these width and align, the icon below moves when num of digits change. ??
+			)
+		)
+		(tf
+			(alpha = 0.8)
+			(class $TextIndicator)
+			(style
+				(letterSpacing = "-1")
+				(scaleX = 0.85)
+			)
+			(text = "_measure")
+		)
+		(macro CROSS_SHOW_ANIMATION "_rightAligned ? _animationIndex : _animationIndex + 0.5" "_animationTrigger")
+	)
+	(block
+		(bind visible "_rightAligned")
+		(style
+			(bind backgroundImage "'url:../../../PnFMods/PenetrationCalculatorPy/penetration_indicator.png'")
+			(width = 26) (height = 26)
+			(scaleX = 0.66) (scaleY = 0.66)
+			(marginTop = 4)
+		)
+		(macro CROSS_SHOW_ANIMATION "_animationIndex + 0.5" "_animationTrigger")
+	)
+)
+
+(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+	(scope
+		(var isRicochetVisible:bool = "_alwaysRicochet > 0 && _startRicochet > 0")
+		(var isImpactAngleVisible:bool = "_impactAngle > 0")
+		(var alwaysRicochetText:str = "ceil(_alwaysRicochet) != _alwaysRicochet ? formatFloatingPoint(_alwaysRicochet, 1) : _alwaysRicochet")
+		(var startRicochetText:str = "ceil(_startRicochet) != _startRicochet ? formatFloatingPoint(_startRicochet, 1) : _startRicochet")
+		(var ricochetAnglesText:str = "startRicochetText + ' - ' + alwaysRicochetText + '°'")
+		(var impactAngleText:str = "toString(_impactAngle) + '°'")
+	)
+
+	(style
+		(align = "middle|center")
+		(hitTest = false)
+		(flow = "Flow.HORIZONTAL")
+		(width = "300px")
+	)
+
+	(macro TOOLTIP_SYSTEM_DEFAULT_BACKGROUND)
+
+	(element TOOLTIP_SYSTEM_DEFAULT_CONTAINER
+		(style
+			(flow = "Flow.HORIZONTAL")
+			(align = "middle|center")
+		)
+
+		(block
+			(style
+				(width = 100%)
+			)
+			(element TooltipSystemHeaderSubheaderText _headerText="'Ricochet Angles'" _subheaderText="ricochetAnglesText"
+				(bind visible "isRicochetVisible")
+			)
+			(element TooltipSystemHorizontalDivider
+				(style
+					(width = 70%) # Wonky fix
+				)
+				(bind visible "isRicochetVisible && isImpactAngleVisible")
+			)
+			(element TooltipSystemHeaderSubheaderText _headerText="'Falling Impact Angle'" _subheaderText="impactAngleText"
+				(bind visible "isImpactAngleVisible")
+			)
+		)
+
+		# Angle Indicator
+		(block
+			(style
+				(width = 120px)
+				(height = 120px)
+				(marginTop = 15px)
+				(align = "middle|center")
+			)
+			(block
+				(style
+					(backgroundImage = 'symbol:compass_default_doll')
+				)
+				(element PenetrationCalculatorAngleRightItem
+					_alwaysRicochet="_alwaysRicochet"
+					_startRicochet="_startRicochet"
+					_impactAngle="_impactAngle"
+
+				)
+				(element PenetrationCalculatorAngleLeftItem
+					_alwaysRicochet="_alwaysRicochet"
+					_startRicochet="_startRicochet"
+					_impactAngle="_impactAngle"
+
+				)
+			)
+		)
+		#
+	)
+)
+
+(def element PenetrationCalculatorAngleRightItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+	(scope
+		# Tachibana AP has very weird settings:
+		# It Must be tested
+		(var ricochetAngleArc:number = "abs(_alwaysRicochet - _startRicochet)")
+		(var alwaysRicochetArc:number = "90 - _alwaysRicochet")
+		(var startRicochetArc:number = "90 - _startRicochet")
+		(var noRicochetArc:number = "180 - max(alwaysRicochetArc, startRicochetArc) * 2")
+	)
+
+	# Always Ricochets
+	(element PenetrationCalculatorSectorItem _offset="-90" _arc=" alwaysRicochetArc" _color=0xFF0000)
+	(element PenetrationCalculatorSectorItem _offset=" 90" _arc="-alwaysRicochetArc" _color=0xFF0000)
+	# Always-Start Ricochets
+	(element PenetrationCalculatorSectorItem _offset="-90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
+	(element PenetrationCalculatorSectorItem _offset=" 90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
+	# No Ricochet
+	(element PenetrationCalculatorSectorItem _offset="-90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
+
+	(element PenetrationCalculatorLineItem _offset="-90" _angle="0")
+	(element PenetrationCalculatorLineItem _offset="-90" _angle="alwaysRicochetArc")
+	(element PenetrationCalculatorLineItem _offset="-90" _angle="startRicochetArc" _length=50)
+
+	(style
+		(position = "absolute")
+		(left = 17)
+	)
+)
+
+(def element PenetrationCalculatorAngleLeftItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+	(scope
+		# Tachibana AP has very weird settings:
+		# It Must be tested
+		(var ricochetAngleArc:number = "abs(_alwaysRicochet - _startRicochet)")
+		(var alwaysRicochetArc:number = "90 - _alwaysRicochet")
+		(var startRicochetArc:number = "90 - _startRicochet")
+		(var noRicochetArc:number = "180 - max(alwaysRicochetArc, startRicochetArc) * 2")
+	)
+
+	# Always Ricochets
+	(element PenetrationCalculatorSectorItem _offset="-90" _arc="-alwaysRicochetArc" _color=0xFF0000)
+	(element PenetrationCalculatorSectorItem _offset=" 90" _arc=" alwaysRicochetArc" _color=0xFF0000)
+	# Always-Start Ricochets
+	(element PenetrationCalculatorSectorItem _offset="-90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
+	(element PenetrationCalculatorSectorItem _offset=" 90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
+	# No Ricochet
+	(element PenetrationCalculatorSectorItem _offset=" 90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
+
+	(element PenetrationCalculatorLineItem _offset="180" _angle="0" _length=50)
+	(element PenetrationCalculatorLineItem _offset="180" _angle="_alwaysRicochet")
+	(element PenetrationCalculatorLineItem _offset="180" _angle="_startRicochet" _length=50)
+
+	(style
+		(position = "absolute")
+		(right = 17)
+	)
+)
+
+(def element PenetrationCalculatorSectorItem(_offset:number=0, _arc:number=0, _color:number=0xFFFFFF)
+	(controller $Sector
+		(bind offset "_offset")
+		(bind color "_color")
+		(bind arc "_arc")
+		(bind radius "45")
+		(bind innerRadius "0")
+	)
+	(alpha = 0.7)
+)
+
+(def element PenetrationCalculatorLineItem(_offset:number, _angle:number, _length:number = 65)
+	(scope
+		(var normOffset:number = "_offset % 360")
+		(var isLeft:bool = "90 <= normOffset && normOffset <= 270 ? true : false")
+		(var rad:number = "gradToRad(_offset + _angle)")
+		(var xEnd:number = "cos(rad) * _length")
+		(var yEnd:number = "sin(rad) * _length")
+		(var label:str = "floor(_angle) != _angle ? formatFloatingPoint(_angle, 1) : _angle")
+	)
+	
+	(block
+		(.graphics
+			(lineStyle "1" "0xFFFFFFFF")
+			(moveTo "0" "0")
+			(lineTo "xEnd" "yEnd")
+			(endFill)
+		)
+	)
+
+	(block
+		(style
+			(position = "absolute")
+			(bind top "yEnd - 15")
+			(bind left "xEnd")
+			(bind pivotX "isLeft ? 100% : 0%")
+		)
+		(tf
+			(class $TextIndicator)
+			(bind text "label")
+		)
+	)
+)
