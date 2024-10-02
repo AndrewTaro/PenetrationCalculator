@@ -1,5 +1,5 @@
 # Penetration Calculator
-This modification displays the penetration capability of the selected shell at the aiming distance.
+This modification displays the penetration capability of your current armament at the aiming distance.
 
 # Overview
 ![image](https://github.com/AndrewTaro/PenetrationCalculator/assets/36262823/2fcd9764-910c-4230-9d42-6f457b4a7100)
