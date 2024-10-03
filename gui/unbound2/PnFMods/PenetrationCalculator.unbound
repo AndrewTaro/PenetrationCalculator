@@ -93,6 +93,10 @@
 		(var penetrationText:str = "round(penetration)")
 		(var isPenetrationVisible:bool = "penetration > 0")
 
+		# Detonator
+		(var detonatorDelay:number = "'detonatorDelay' in penData ? penData.detonatorDelay : -1")
+		(var detonatorThreshold:number = "'detonatorThreshold' in penData ? penData.detonatorThreshold : -1")
+
 		# Ricochet Angles
 		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
 		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
@@ -191,6 +195,8 @@
 				_alwaysRicochet="alwaysRicochet"
 				_startRicochet="startRicochet"
 				_impactAngle="impactAngle"
+				_detonatorDelay="detonatorDelay"
+				_detonatorThreshold="detonatorThreshold"
 			)
 			(macro DEFAULT_TOOLTIP_BEHAVIOUR "0")
 		)
@@ -243,7 +249,7 @@
 	)
 )
 
-(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number)
 	(scope
 		(var isRicochetVisible:bool = "_alwaysRicochet > 0 && _startRicochet > 0")
 		(var isImpactAngleVisible:bool = "_impactAngle > 0")
@@ -251,6 +257,10 @@
 		(var startRicochetText:str = "ceil(_startRicochet) != _startRicochet ? formatFloatingPoint(_startRicochet, 1) : _startRicochet")
 		(var ricochetAnglesText:str = "startRicochetText + ' - ' + alwaysRicochetText + '°'")
 		(var impactAngleText:str = "toString(_impactAngle) + '°'")
+
+		(var isDetonatorVisible:bool = "_detonatorDelay > 0 && _detonatorThreshold > 0")
+		(var detonatorDelayText:str = "formatFloatingPoint(_detonatorDelay, 3) + 's'")
+		(var detonatorThresholdText:str = "formatFloatingPoint(_detonatorThreshold, 1) + 'mm'")
 	)
 
 	(style
@@ -283,6 +293,24 @@
 			)
 			(element TooltipSystemHeaderSubheaderText _headerText="'Falling Impact Angle'" _subheaderText="impactAngleText"
 				(bind visible "isImpactAngleVisible")
+			)
+			(element TooltipSystemHorizontalDivider
+				(style
+					(width = 70%) # Wonky fix
+				)
+				(bind visible "isRicochetVisible && isDetonatorVisible")
+			)
+			(element TooltipSystemHeaderSubheaderText _headerText="'Fuse Delay'" _subheaderText="detonatorDelayText"
+				(bind visible "isDetonatorVisible")
+			)
+			(element TooltipSystemHorizontalDivider
+				(style
+					(width = 70%) # Wonky fix
+				)
+				(bind visible "isDetonatorVisible")
+			)
+			(element TooltipSystemHeaderSubheaderText _headerText="'Fuse Threshold'" _subheaderText="detonatorThresholdText"
+				(bind visible "isDetonatorVisible")
 			)
 		)
 
