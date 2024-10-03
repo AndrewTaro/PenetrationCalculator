@@ -100,12 +100,15 @@ class PenetrationCalculator(object):
 
     def getPenetratonData(self):
         ammo = self.ammo
-        isRicochetable = ammo.ammoType == 'CS' or ammo.ammoType =='AP'
+        isAP = ammo.ammoType =='AP'
+        isRicochetable = ammo.ammoType == 'CS' or isAP
         impactAgnle = battle.getSelfHoopRanging().pitch
         return dict(
             penetration = self.getPenetration(ammo),
             startRicochet = ammo.bulletRicochetAt if isRicochetable else INVALID_VALUE,
             alwaysRicochet = ammo.bulletAlwaysRicochetAt if isRicochetable else INVALID_VALUE,
+            detonatorDelay = ammo.bulletDetonator if isAP else INVALID_VALUE,
+            detonatorThreshold = ammo.bulletDetonatorThreshold if isAP else INVALID_VALUE,
             impactAngle = degrees(impactAgnle) if not self.isSquadronMode else INVALID_VALUE,
         )
     
