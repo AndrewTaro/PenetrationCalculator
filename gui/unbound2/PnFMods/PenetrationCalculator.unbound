@@ -37,6 +37,7 @@
 		(var cameraEntity:gfx = "$datahub.getSingleEntity(CC.camera)")
 		(var cameraMode:number = "cameraEntity.camera.mode" (event "cameraEntity.camera.evModeChanged"))
 		(var isCameraTrackingShell:bool = "cameraMode == CameraMode.SHELLTRACKER")
+		(var isTactical:bool = "cameraEntity.camera.isTactical" (event "cameraEntity.camera.evTacticalStateChanged"))
 
 		(var avatar:gfx = "$datahub.getSingleEntity(CC.playerAvatar)")
 		(var healthComponent:gfx = "avatar ? avatar.health : null")
@@ -46,7 +47,7 @@
 		(var squadronCameraMode:str = "aircarrier ? aircarrier.squadronCameraMode : ''" (event "aircarrier.evSquadronCameraModeChanged"))
 		(var isLastLookCamera:bool = "aircarrier && (squadronCameraMode != SquadronCameraModes.DEFAULT)")
 
-		(var isCrosshairVisible:bool = "isAlive && !(isCameraTrackingShell) && !(isLastLookCamera)")
+		(var isCrosshairVisible:bool = "isAlive && !(isCameraTrackingShell) && !(isLastLookCamera) && !isTactical")
 	)
 
 	(style
@@ -74,7 +75,7 @@
 		(macro PENCALC_GET_USERPREF)
 
 		(macro PENCALC_GET_PREF_NUMBER _varName="'heightOffset'" 				_pref="PENCALC_PREFS.HEIGHT_OFFSET")
-		(macro PENCALC_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 		_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
+		(macro PENCALC_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 			_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
 
 		(macro PENCALC_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
 
@@ -88,9 +89,17 @@
 		(var penDataComponent:gfx = "penEntity ? penEntity.mods_DataComponent : null")
 		(var penData:dict = "penDataComponent ? penDataComponent.data : {}" (event "penDataComponent.evDataChanged"))
 
+		# AP Skips
+		(var apSkipData:dict = "'apSkipData' in penData ? penData.apSkipData : null")
+		(var skipPens:array = "apSkipData && 'penetrations' in apSkipData ? apSkipData.penetrations : []")
+		(var skip1:str = "skipPens.length > 0 ? ' | ' + round(skipPens[0]) : ''")
+		(var skip2:str = "skipPens.length > 1 ? ' | ' + round(skipPens[1]) : ''")
+		(var skip3:str = "skipPens.length > 2 ? ' | ' + round(skipPens[2]) : ''")
+		(var skipPen:str = "skip1 + skip2 + skip3")
+
 		# Data
-		(var penetration:number = "'penetration' in penData ? penData.penetration : -1" (event "evEnterFrame"))
-		(var penetrationText:str = "round(penetration)")
+		(var penetration:number = "'penetration' in penData ? penData.penetration : -1")
+		(var penetrationText:str = "toString(round(penetration)) + skipPen")
 		(var isPenetrationVisible:bool = "penetration > 0")
 
 		# Detonator
@@ -197,6 +206,7 @@
 				_impactAngle="impactAngle"
 				_detonatorDelay="detonatorDelay"
 				_detonatorThreshold="detonatorThreshold"
+				_apSkipData="apSkipData"
 			)
 			(macro DEFAULT_TOOLTIP_BEHAVIOUR "0")
 		)
@@ -249,7 +259,7 @@
 	)
 )
 
-(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number)
+(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number, _apSkipData:dict)
 	(scope
 		(var isRicochetVisible:bool = "_alwaysRicochet > 0 && _startRicochet > 0")
 		(var isImpactAngleVisible:bool = "_impactAngle > 0")
@@ -258,9 +268,16 @@
 		(var ricochetAnglesText:str = "startRicochetText + ' - ' + alwaysRicochetText + '°'")
 		(var impactAngleText:str = "toString(_impactAngle) + '°'")
 
+		# AP Skips
+		(var skipFuses:array = "_apSkipData && 'detonatorThresholds' in _apSkipData ? _apSkipData.detonatorThresholds : []")
+		(var skip1:str = "skipFuses.length > 0 ? ' | ' + formatFloatingPoint(skipFuses[0], 1) : ''")
+		(var skip2:str = "skipFuses.length > 1 ? ' | ' + formatFloatingPoint(skipFuses[1], 1) : ''")
+		(var skip3:str = "skipFuses.length > 2 ? ' | ' + formatFloatingPoint(skipFuses[2], 1) : ''")
+		(var skipFuse:str = "skip1 + skip2 + skip3")
+
 		(var isDetonatorVisible:bool = "_detonatorDelay > 0 && _detonatorThreshold > 0")
 		(var detonatorDelayText:str = "formatFloatingPoint(_detonatorDelay, 3) + 's'")
-		(var detonatorThresholdText:str = "formatFloatingPoint(_detonatorThreshold, 1) + 'mm'")
+		(var detonatorThresholdText:str = "formatFloatingPoint(_detonatorThreshold, 1) + skipFuse + 'mm'")
 	)
 
 	(style
@@ -311,6 +328,11 @@
 			)
 			(element TooltipSystemHeaderSubheaderText _headerText="'Fuse Threshold'" _subheaderText="detonatorThresholdText"
 				(bind visible "isDetonatorVisible")
+			)
+
+			# No Info
+			(element TooltipSystemHeaderSubheaderText _headerText="'No Information Available'" _unifiedStatus = "SC.Ui_styles.UNIFIED_STATUS.INFO"
+				(bind visible "!isRicochetVisible && !isRicochetVisible")
 			)
 		)
 
