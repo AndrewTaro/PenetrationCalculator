@@ -13,6 +13,25 @@ INF = float('inf')
 INVALID_VALUE = -1
 COMPONENT_ID = 'modPenetrationCalculator'
 
+AP_SKIP_DATA = {
+    4075209424: [
+        {
+            'alwaysRicochetCoef': 1.0,
+            'bombKruppMultiplier': 1.0,
+            'detonatorCoef': 1.0,
+            'detonatorThresholdCoef': 1.0,
+            'ricochetCoef': 1.0,
+        },
+        {
+            'alwaysRicochetCoef': 1.0,
+            'bombKruppMultiplier': 0.45,
+            'detonatorCoef': 1.0,
+            'detonatorThresholdCoef': 0.2,
+            'ricochetCoef': 1.0,
+        },
+    ],
+}
+
 
 class PenetrationCalculator(object):
     def __init__(self):
@@ -103,13 +122,15 @@ class PenetrationCalculator(object):
         isAP = ammo.ammoType =='AP'
         isRicochetable = ammo.ammoType == 'CS' or isAP
         impactAgnle = battle.getSelfHoopRanging().pitch
+        penetration = self.getPenetration(ammo)
         return dict(
-            penetration = self.getPenetration(ammo),
+            penetration = penetration,
             startRicochet = ammo.bulletRicochetAt if isRicochetable else INVALID_VALUE,
             alwaysRicochet = ammo.bulletAlwaysRicochetAt if isRicochetable else INVALID_VALUE,
             detonatorDelay = ammo.bulletDetonator if isAP else INVALID_VALUE,
             detonatorThreshold = ammo.bulletDetonatorThreshold if isAP else INVALID_VALUE,
             impactAngle = degrees(impactAgnle) if not self.isSquadronMode else INVALID_VALUE,
+            apSkipData = self.__getAdditionalAPSkipData(ammo, penetration)
         )
     
     def _getImpactAngle(self, ammo):
@@ -129,6 +150,24 @@ class PenetrationCalculator(object):
                 return impactSpeed
         #utils.logError(LOGGER_NAME, 'Failed to calculate speed: ammo: {}, gunPos: {}, gunDir: {}'.format(ammo, gunPos, gunDir))
         return INF
+    
+    def __getAdditionalAPSkipData(self, ammo, pen):
+        """
+        None | dict
+        """
+        modifiers = AP_SKIP_DATA.get(ammo.id, None)
+        if not modifiers:
+            return None
+        
+        data = dict(
+            penetrations = [ pen * mod['bombKruppMultiplier'] for mod in modifiers ],
+            # detonatorDelays = [ ammo.bulletDetonator * mod['detonatorCoef'] for mod in modifiers],
+            detonatorThresholds = [ ammo.bulletDetonatorThreshold * mod['detonatorThresholdCoef'] for mod in modifiers],
+            # startRicochets = [ ammo.bulletRicochetAt * mod['ricochetCoef'] for mod in modifiers],
+            # alwaysRicochets = [ ammo.bulletAlwaysRicochetAt * mod['alwaysRicochetCoef'] for mod in modifiers],
+        )
+
+        return data
 
     def onAmmoChanged(self, ammoId):
         if self.ammo is None or self.ammo.id != ammoId:
