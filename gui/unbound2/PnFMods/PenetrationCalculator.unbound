@@ -332,7 +332,7 @@
 
 			# No Info
 			(element TooltipSystemHeaderSubheaderText _headerText="'No Information Available'" _unifiedStatus = "SC.Ui_styles.UNIFIED_STATUS.INFO"
-				(bind visible "!isRicochetVisible && !isRicochetVisible")
+				(bind visible "!(isRicochetVisible || isImpactAngleVisible || isDetonatorVisible)")
 			)
 		)
 
