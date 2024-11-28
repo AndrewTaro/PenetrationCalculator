@@ -90,7 +90,9 @@
 		(var penData:dict = "penDataComponent ? penDataComponent.data : {}" (event "penDataComponent.evDataChanged"))
 
 		# AP Skips
-		(var apSkipData:dict = "'apSkipData' in penData ? penData.apSkipData : null")
+		# do not feed null to a dict type variable
+		# it will not be able to convert the gfx Object next time.
+		(var apSkipData:dict = "'apSkipData' in penData && null != penData.apSkipData ? penData.apSkipData : {}")
 		(var skipPens:array = "apSkipData && 'penetrations' in apSkipData ? apSkipData.penetrations : []")
 		(var skip1:str = "skipPens.length > 0 ? ' | ' + round(skipPens[0]) : ''")
 		(var skip2:str = "skipPens.length > 1 ? ' | ' + round(skipPens[1]) : ''")
