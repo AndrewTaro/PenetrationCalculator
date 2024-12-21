@@ -1,12 +1,6 @@
 (def constant PENCALC_COMPONENT_KEY 'modPenetrationCalculator')
 (def constant TT_PENCALCULATOR_INSTALLED true) #for modconfig
 
-(def constant PENCALC_PREFS {
-	IMPACT_ANGLE_ALWAYS_VISIBLE	: {KEY: 'penCalcImpactAngleAlwaysVisible',		DEFAULT: false}, # Always Show Impact Angle
-	FONT_STYLE_INDEX			: {KEY: 'penCalcFontStyleIndex',				DEFAULT: 0,	MODIFIER: 1, OFFSET: 0}, # Font Style
-	HEIGHT_OFFSET				: {KEY: 'penCalcHeightOffset',					DEFAULT: 1,	MODIFIER: 1, OFFSET: 1}, # Row Index
-})
-
 (def constant PENCALC_FONT_COLORS [
 	"FONT_CLASS_TO_COLOR['$FontColorDefault']",
 	"FONT_CLASS_TO_COLOR['$FontColorBuoyancy']",
@@ -15,18 +9,6 @@
 	"FONT_CLASS_TO_COLOR['$FontColorOrange']",
 ])
 
-(def macro PENCALC_GET_USERPREF()
-	(var userPrefsComponent:gfx = "$datahub.getSingleComponent(CC.userPrefs)")
-	(var userPrefsNum:gfx = "userPrefsComponent.userPrefs.chatBoxWidth" watch=false (event "userPrefsComponent.evUserPrefsChanged"))
-)
-
-(def macro PENCALC_GET_PREF_NUMBER (_varName:expression, _pref:expression)
-	(var name="_varName" type=number value="userPrefsNum && isNumber(userPrefsNum[_pref.KEY]) ? _pref.OFFSET + (round(userPrefsNum[_pref.KEY]) * _pref.MODIFIER) : _pref.DEFAULT")
-)
-
-(def macro PENCALC_GET_PREF_BOOL (_varName:expression, _pref:expression)
-	(var name="_varName" type=bool value="userPrefsNum && isNumber(userPrefsNum[_pref.KEY]) ? round(userPrefsNum[_pref.KEY]) : _pref.DEFAULT")
-)
 
 (def element PenetrationCalculator() layout=true
 	(scope
@@ -72,12 +54,12 @@
 		(var altVision:bool = "cameraEntity.camera.altVision" (event "cameraEntity.camera.evAltVisionChanged"))
 
 		# UserPrefs
-		(macro PENCALC_GET_USERPREF)
+		(macro TT_GET_USERPREF)
 
-		(macro PENCALC_GET_PREF_NUMBER _varName="'heightOffset'" 				_pref="PENCALC_PREFS.HEIGHT_OFFSET")
-		(macro PENCALC_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 			_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
+		(macro TT_GET_PREF_NUMBER _varName="'heightOffset'" 				_pref="PENCALC_PREFS.HEIGHT_OFFSET")
+		(macro TT_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 			_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
 
-		(macro PENCALC_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
+		(macro TT_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
 
 		# Font style
 		(var fontStyleIndex:number = "fontStylePrefIndex < PENCALC_FONT_COLORS.length ? fontStylePrefIndex : 0")
