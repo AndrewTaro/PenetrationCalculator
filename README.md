@@ -14,8 +14,8 @@ This modification displays the penetration capability of your selected armament 
 - **Ricochet Angles**
   - Some visualizations will help you to understand it as well.
  
-## Customizations
-With [TTaro Mod Config](../../../TTaroModConfig)  (which is automatically downloaded with this mod if you install the mod from Aslain), players can customize some elements.
+## Requirements
+- [TTaro Mod Config](../../../TTaroModConfig): You must install this config in order to use the mod.
 
 Resetting to default is easy - Just click the gear icon next to each option.
 So don't hesitate and try various settings!
