@@ -94,7 +94,7 @@
 		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
 		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
 		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : -1")
-		(var impactAngleText:str = "formatFloatingPoint(impactAngle, 2)")
+		(var impactAngleText:str = "formatFloatingPoint(impactAngle, 1)")
 		(var isImpactAngleVisible:bool = "impactAngle > 0")
 
 		# First Row Item
@@ -161,16 +161,6 @@
 
 			(bind visible "isPenetrationVisible")
 		)
-		# (element PenetrationCalculatorTextItem
-		# 	_iconName= 'angle_indicator'
-		# 	_value	 = "impactAngle"
-		# 	_measure = '°'
-		# 	_fontColor = "fontColor"
-		# 	_animationIndex = "heightOffset + 1"
-		# 	_animationTrigger = "isBattleStartAnimationTriggered"
-
-		# 	(bind visible "isImpactAngleAlwaysVisible && isImpactAngleVisible")
-		# )
 		(controller $Instance renderer='PenetrationCalculatorTextItem'
 			(bind enabled "isImpactAngleAlwaysVisible && isImpactAngleVisible")
 			(args
