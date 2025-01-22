@@ -175,7 +175,7 @@
 			(bind enabled "isImpactAngleAlwaysVisible && isImpactAngleVisible")
 			(args
 				_iconName= 'angle_indicator'
-				_value	 = "impactAngle"
+				_value	 = "impactAngleText"
 				_measure = '°'
 				_fontColor = "fontColor"
 				_animationIndex = "heightOffset + 1"
