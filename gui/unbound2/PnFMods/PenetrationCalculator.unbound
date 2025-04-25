@@ -114,14 +114,10 @@
 		# For Rage Mode Gauge and Offset
 		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
 		(var selfVehicleEntity:gfx = "selfVehicleWatcher.entity" (event "selfVehicleWatcher.event"))
-		(var vehicleID:number = "selfVehicleEntity ? selfVehicleEntity.vehicle.id : 0")
+		(var vehicleID:number = "selfVehicleEntity ? selfVehicleEntity.vehicle.id : 0" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
 
-		(var rageModesCollection:gfx = "$datahub.getCollection(CC.rageMode)")
-		(var rageModeEntity:gfx = "selfVehicleEntity ? $datahub.getPrimaryEntity(CC.rageMode, vehicleID) : null"
-										(event "rageModesCollection.evAdded")
-										(event "rageModesCollection.evRemoved")
-										(event "rageModesCollection.evUpdated")
-		)
+		(var rageModeWatcher:gfx = "$datahub.getPrimWatcher(CC.rageMode, vehicleID)")
+		(var rageModeEntity:gfx = "rageModeWatcher.entity" (event "rageModeWatcher.event"))
 
 		(var controller:gfx = "selfVehicleEntity ? selfVehicleEntity.weaponController : null" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
 		(var weaponType:number = "controller ? controller.selectedWeapon
@@ -135,6 +131,10 @@
 		(var isAddIndicatorOffset:bool = "(isRageModeGageVisible || isBurstFireGageVisible)")
 
 		(var arcOffset:number = "isAddIndicatorOffset ? OFFSET_ARC : 0" watch=false)
+		(controller $Animation
+			(bindcall play duration=0.12 to="{arcOffset:OFFSET_ARC}" watch=false action="killAll" init=false (bind enabled "isAddIndicatorOffset"))
+			(bindcall play duration=0.12 to="{arcOffset:0}" watch=false action="killAll" init=false (bind enabled "!isAddIndicatorOffset"))
+		)
 
 		(var battleDataEntity:gfx = "$datahub.getSingleEntity(CC.battleData)")
 		(var isBattleStarted:bool = "battleDataEntity.battleState.battleState == SC.Common.CLIENT_BATTLE_STATE.STARTED" (event "battleDataEntity.battleState.evBattleStateChanged"))
