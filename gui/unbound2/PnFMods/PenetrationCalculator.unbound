@@ -1,7 +1,7 @@
 (def constant PENCALC_COMPONENT_KEY 'modPenetrationCalculator')
 (def constant TT_PENCALCULATOR_INSTALLED true) #for modconfig
 
-(def constant PENCALC_FONT_COLORS [
+(def constant PenCalc_FONT_COLORS [
 	"FONT_CLASS_TO_COLOR['$FontColorDefault']",
 	"FONT_CLASS_TO_COLOR['$FontColorBuoyancy']",
 	"FONT_CLASS_TO_COLOR['$FontColorGolden']",
@@ -9,6 +9,7 @@
 	"FONT_CLASS_TO_COLOR['$FontColorOrange']",
 ])
 
+(def constant PenCalc_INVALID_VALUE -1)
 
 (def element PenetrationCalculator() layout=true
 	(scope
@@ -38,7 +39,7 @@
 		(bind height "stageHeight")
 	)
 
-	(controller $Instance renderer='PenetrationCalculatorItem'
+	(controller $Instance renderer='PenCalc_CorsshairItem'
 		(bind enabled "isAlive")
 		(exprs
 			(style (position = "absolute") (left = 50%) (top = 50%))
@@ -47,7 +48,7 @@
 	)
 )
 
-(def element PenetrationCalculatorItem() layout=true
+(def element PenCalc_CorsshairItem() layout=true
 	(scope
 		# Camera
 		(var cameraEntity:gfx = "$datahub.getSingleEntity(CC.camera)")
@@ -62,8 +63,8 @@
 		(macro TT_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
 
 		# Font style
-		(var fontStyleIndex:number = "fontStylePrefIndex < PENCALC_FONT_COLORS.length ? fontStylePrefIndex : 0")
-		(var fontColor:number = "PENCALC_FONT_COLORS[fontStyleIndex]")
+		(var fontStyleIndex:number = "fontStylePrefIndex < PenCalc_FONT_COLORS.length ? fontStylePrefIndex : 0")
+		(var fontColor:number = "PenCalc_FONT_COLORS[fontStyleIndex]")
 
 		# Pen Data Entity
 		(var penEntityWatcher:gfx = "$datahub.getPrimWatcher(CC.mods_DataComponent, PENCALC_COMPONENT_KEY)")
@@ -82,18 +83,22 @@
 		(var skipPen:str = "skip1 + skip2 + skip3")
 
 		# Data
-		(var penetration:number = "'penetration' in penData ? penData.penetration : -1")
+		(var penetration:number = "'penetration' in penData ? penData.penetration : PenCalc_INVALID_VALUE")
 		(var penetrationText:str = "toString(round(penetration)) + skipPen")
 		(var isPenetrationVisible:bool = "penetration > 0")
 
 		# Detonator
-		(var detonatorDelay:number = "'detonatorDelay' in penData ? penData.detonatorDelay : -1")
-		(var detonatorThreshold:number = "'detonatorThreshold' in penData ? penData.detonatorThreshold : -1")
+		(var detonatorDelay:number = "'detonatorDelay' in penData ? penData.detonatorDelay : PenCalc_INVALID_VALUE")
+		(var detonatorThreshold:number = "'detonatorThreshold' in penData ? penData.detonatorThreshold : PenCalc_INVALID_VALUE")
+		(var detonatorLength:number = "'detonatorLength' in penData ? penData.detonatorLength : PenCalc_INVALID_VALUE")
+
+		# Overmatch
+		(var overmatch:number = "'overmatch' in penData ? penData.overmatch : PenCalc_INVALID_VALUE")
 
 		# Ricochet Angles
-		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : -1") #60
-		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : -1") #45
-		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : -1")
+		(var alwaysRicochet:number = "'alwaysRicochet' in penData ? penData.alwaysRicochet : PenCalc_INVALID_VALUE") #60
+		(var startRicochet:number = "'startRicochet' in penData ? penData.startRicochet : PenCalc_INVALID_VALUE") #45
+		(var impactAngle:number = "'impactAngle' in penData ? penData.impactAngle : PenCalc_INVALID_VALUE")
 		(var impactAngleText:str = "formatFloatingPoint(impactAngle, 1)")
 		(var isImpactAngleVisible:bool = "impactAngle > 0")
 
@@ -151,7 +156,7 @@
 			(align = "right")
 		)
 		
-		(element PenetrationCalculatorTextItem
+		(element PenCalc_TextItem
 			_iconName= "firstRowIcon"
 			_value	 = "firstRowText"
 			_measure = "firstRowMeasure"
@@ -161,26 +166,29 @@
 
 			(bind visible "isPenetrationVisible")
 		)
-		(controller $Instance renderer='PenetrationCalculatorTextItem'
+		(controller $Instance renderer='PenCalc_TextItem'
 			(bind enabled "isImpactAngleAlwaysVisible && isImpactAngleVisible")
 			(args
-				_iconName= 'angle_indicator'
-				_value	 = "impactAngleText"
-				_measure = '°'
-				_fontColor = "fontColor"
+				_iconName		= 'angle_indicator'
+				_value	 		= "impactAngleText"
+				_measure 		= '°'
+				_fontColor 		= "fontColor"
 				_animationIndex = "heightOffset + 1"
 				_animationTrigger = "isBattleStartAnimationTriggered"
 			)
 		)
 		(controller $Tooltip
-			(renderer='PenetrationCalculatorTooltipItem')
+			(renderer='PenCalc_TooltipItem')
 			(args
-				_alwaysRicochet="alwaysRicochet"
-				_startRicochet="startRicochet"
-				_impactAngle="impactAngle"
-				_detonatorDelay="detonatorDelay"
-				_detonatorThreshold="detonatorThreshold"
-				_apSkipData="apSkipData"
+				_alwaysRicochet		= "alwaysRicochet"
+				_startRicochet		= "startRicochet"
+				_impactAngle		= "impactAngle"
+				_detonatorDelay		= "detonatorDelay"
+				_detonatorThreshold	= "detonatorThreshold"
+				_detonatorLength	= "detonatorLength"
+				_overmatch			= "overmatch"
+				_apSkipData			= "apSkipData"
+				_userPrefsNum		= "_userPrefsNum"
 			)
 			(macro DEFAULT_TOOLTIP_BEHAVIOUR "0")
 		)
@@ -189,7 +197,7 @@
 )
 
 
-(def element PenetrationCalculatorTextItem (_iconName:str, _value:str, _measure:str, _fontColor:number, _animationIndex:number, _animationTrigger:bool = false) layout=true
+(def element PenCalc_TextItem (_iconName:str, _value:str, _measure:str, _fontColor:number, _animationIndex:number, _animationTrigger:bool = false) layout=true
 	(scope
 		(var _index:number = "_animationIndex" watch=false)
 	)
@@ -233,32 +241,44 @@
 	)
 )
 
-(def element PenetrationCalculatorTooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number, _apSkipData:dict)
+(def element PenCalc_TooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number, _detonatorLength:number, _overmatch:number, _apSkipData:dict, _userPrefsNum:gfx=null)
 	(scope
 		(var isRicochetVisible:bool = "_alwaysRicochet > 0 && _startRicochet > 0")
 		(var isImpactAngleVisible:bool = "_impactAngle > 0")
 		(var alwaysRicochetText:str = "ceil(_alwaysRicochet) != _alwaysRicochet ? formatFloatingPoint(_alwaysRicochet, 1) : _alwaysRicochet")
 		(var startRicochetText:str = "ceil(_startRicochet) != _startRicochet ? formatFloatingPoint(_startRicochet, 1) : _startRicochet")
-		(var ricochetAnglesText:str = "startRicochetText + ' - ' + alwaysRicochetText + '°'")
-		(var impactAngleText:str = "toString(_impactAngle) + '°'")
+		(var ricochetAnglesText:str = "startRicochetText + ' - ' + alwaysRicochetText")
+		(var impactAngleText:str = "formatFloatingPoint(_impactAngle, 1)")
+		(var overmatchText:str = "round(_overmatch)")
+		(var isOvermatchVisible:bool = "_overmatch > 0")
+		(var detonatorLengthText:str = "formatFloatingPoint(_detonatorLength, 1)")
+		(var isDetonatorLengthVisible:bool = "_detonatorLength > 0")
 
 		# AP Skips
 		(var skipFuses:array = "_apSkipData && 'detonatorThresholds' in _apSkipData ? _apSkipData.detonatorThresholds : []")
-		(var skip1:str = "skipFuses.length > 0 ? ' | ' + formatFloatingPoint(skipFuses[0], 1) : ''")
-		(var skip2:str = "skipFuses.length > 1 ? ' | ' + formatFloatingPoint(skipFuses[1], 1) : ''")
-		(var skip3:str = "skipFuses.length > 2 ? ' | ' + formatFloatingPoint(skipFuses[2], 1) : ''")
-		(var skipFuse:str = "skip1 + skip2 + skip3")
+		(var isSkip:bool = "skipFuses.length > 0")
 
 		(var isDetonatorVisible:bool = "_detonatorDelay > 0 && _detonatorThreshold > 0")
-		(var detonatorDelayText:str = "formatFloatingPoint(_detonatorDelay, 3) + 's'")
-		(var detonatorThresholdText:str = "formatFloatingPoint(_detonatorThreshold, 1) + skipFuse + 'mm'")
+		(var detonatorDelayText:str = "formatFloatingPoint(_detonatorDelay, 3)")
+		(var detonatorThresholdText:str = "formatFloatingPoint(_detonatorThreshold, 0)")
+
+		(var isInformationAvailable:bool = "(isRicochetVisible || isImpactAngleVisible || isDetonatorVisible)")
+
+		# Translations
+		(macro TT_GET_LANGUAGE_INDEX)
+		(macro TT_GET_TRANSLATION _varName="'ricochetAngleTitle'" _key="'IDS_TT_RICOCHET_ANGLES'")
+		(macro TT_GET_TRANSLATION _varName="'impactAngleTitle'" _key="'IDS_TT_IMPACT_ANGLE'")
+		(macro TT_GET_TRANSLATION _varName="'fuseDelayTitle'" _key="'IDS_TT_FUSE_DELAY'")
+		(macro TT_GET_TRANSLATION _varName="'fuseThresholdTitle'" _key="'IDS_TT_FUSE_THRESHOLD'")
+		(macro TT_GET_TRANSLATION _varName="'fuseDistanceTitle'" _key="'IDS_TT_FUSE_DISTANCE'")
+		(macro TT_GET_TRANSLATION _varName="'overmatchTitle'" _key="'IDS_TT_OVERMATCH'")
+		(macro TT_GET_TRANSLATION _varName="'noInfoTitle'" _key="'IDS_TT_NO_INFORMATION'")
 	)
 
 	(style
 		(align = "middle|center")
 		(hitTest = false)
-		(flow = "Flow.HORIZONTAL")
-		(width = "300px")
+		(width = "auto")
 	)
 
 	(macro TOOLTIP_SYSTEM_DEFAULT_BACKGROUND)
@@ -266,47 +286,70 @@
 	(element TOOLTIP_SYSTEM_DEFAULT_CONTAINER
 		(style
 			(flow = "Flow.HORIZONTAL")
-			(align = "middle|center")
+			(align = "middle")
+			(width = "auto")
 		)
 
 		(block
 			(style
-				(width = 100%)
+				(width = 200px)
 			)
-			(element TooltipSystemHeaderSubheaderText _headerText="'Ricochet Angles'" _subheaderText="ricochetAnglesText"
+			(element PenCalc_TooltipText _title="ricochetAngleTitle" _value="ricochetAnglesText" _unit="'°'"
 				(bind visible "isRicochetVisible")
 			)
 			(element TooltipSystemHorizontalDivider
-				(style
-					(width = 70%) # Wonky fix
-				)
 				(bind visible "isRicochetVisible && isImpactAngleVisible")
 			)
-			(element TooltipSystemHeaderSubheaderText _headerText="'Falling Impact Angle'" _subheaderText="impactAngleText"
+			(element PenCalc_TooltipText _title="impactAngleTitle" _value="impactAngleText" _unit="'°'"
 				(bind visible "isImpactAngleVisible")
 			)
 			(element TooltipSystemHorizontalDivider
-				(style
-					(width = 70%) # Wonky fix
-				)
 				(bind visible "isRicochetVisible && isDetonatorVisible")
 			)
-			(element TooltipSystemHeaderSubheaderText _headerText="'Fuse Delay'" _subheaderText="detonatorDelayText"
+			(element PenCalc_TooltipText _title="fuseDelayTitle" _value="detonatorDelayText" _unit="'s'"
 				(bind visible "isDetonatorVisible")
 			)
 			(element TooltipSystemHorizontalDivider
-				(style
-					(width = 70%) # Wonky fix
-				)
+				(bind visible "isDetonatorLengthVisible")
+			)
+			(element PenCalc_TooltipText _title="fuseDistanceTitle" _value="detonatorLengthText" _unit="'m'"
+				(bind visible "isDetonatorLengthVisible")
+			)
+			(element TooltipSystemHorizontalDivider
 				(bind visible "isDetonatorVisible")
 			)
-			(element TooltipSystemHeaderSubheaderText _headerText="'Fuse Threshold'" _subheaderText="detonatorThresholdText"
-				(bind visible "isDetonatorVisible")
+			(block
+				(style
+					(width = 100%)
+				)
+				(controller $Instance renderer='PenCalc_TooltipText'
+					(bind enabled "isDetonatorVisible && !isSkip")
+					(args
+						_title		= "fuseThresholdTitle"
+						_value		= "detonatorThresholdText"
+						_unit		= "'mm'"
+					)
+				)
+				(controller $Instance renderer='PenCalc_TooltipTextMultiValues'
+					(bind enabled "isDetonatorVisible && isSkip")
+					(args
+						_title		= "fuseThresholdTitle"
+						_baseValue	= "detonatorThresholdText"
+						_values		= "skipFuses"
+						_unit		= "'mm'"
+					)
+				)
+			)
+			(element TooltipSystemHorizontalDivider
+				(bind visible "isOvermatchVisible")
+			)
+			(element PenCalc_TooltipText _title="overmatchTitle" _value="overmatchText" _unit="'mm'"
+				(bind visible "isOvermatchVisible")
 			)
 
 			# No Info
-			(element TooltipSystemHeaderSubheaderText _headerText="'No Information Available'" _unifiedStatus = "SC.Ui_styles.UNIFIED_STATUS.INFO"
-				(bind visible "!(isRicochetVisible || isImpactAngleVisible || isDetonatorVisible)")
+			(element TooltipSystemHeaderSubheaderText _headerText="noInfoTitle" _unifiedStatus = "SC.Ui_styles.UNIFIED_STATUS.INFO"
+				(bind visible "!isInformationAvailable")
 			)
 		)
 
@@ -314,22 +357,23 @@
 		(block
 			(bind visible "isRicochetVisible")
 			(style
-				(width = 120px)
-				(height = 120px)
+				(width = 150px)
+				(height = 130px)
 				(marginTop = 15px)
+				(marginLeft = 25px)
 				(align = "middle|center")
 			)
 			(block
 				(style
 					(backgroundImage = 'symbol:compass_default_doll')
 				)
-				(element PenetrationCalculatorAngleRightItem
+				(element PenCalc_AngleRightItem
 					_alwaysRicochet="_alwaysRicochet"
 					_startRicochet="_startRicochet"
 					_impactAngle="_impactAngle"
 
 				)
-				(element PenetrationCalculatorAngleLeftItem
+				(element PenCalc_AngleLeftItem
 					_alwaysRicochet="_alwaysRicochet"
 					_startRicochet="_startRicochet"
 					_impactAngle="_impactAngle"
@@ -341,7 +385,106 @@
 	)
 )
 
-(def element PenetrationCalculatorAngleRightItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+(def element PenCalc_TooltipText(_title:str, _value:str, _unit:str=null)
+	(scope
+		
+	)
+	(style
+		(flow = "Flow.HORIZONTAL")
+		(align = "middle")
+		(width = 100%)
+	)
+	(block
+		(style
+			(width = 70%)
+		)
+		(tf
+			(bind text "_title")
+			(class $PenCalc_TextBold)
+			(style
+				(width = 100%)
+			)
+		)
+	)
+	(hblock
+		(style
+			(width = 30%)
+			(align = "right|middle")
+		)
+		(tf
+			(class $PenCalc_Text)
+			(bind text "_value")
+		)
+		(tf
+			(bind visible "_unit")
+			(class $PenCalc_Text)
+			(alpha = "TC")
+			(bind text "_unit")
+			(style
+				(marginLeft = "6px")
+			)
+		)
+	)
+)
+
+(def element PenCalc_TooltipTextMultiValues(_title:str, _baseValue:str, _values:array, _unit:str=null)
+	(scope
+		
+	)
+	(style
+		(flow = "Flow.HORIZONTAL")
+		(align = "middle")
+		(width = 100%)
+	)
+	(block
+		(style
+			(width = 70%)
+		)
+		(tf
+			(bind text "_title")
+			(class $PenCalc_TextBold)
+			(style
+				(width = 100%)
+			)
+		)
+	)
+	(hblock
+		(style
+			(width = 30%)
+			(align = "right|middle")
+		)
+		(block
+			(style
+				(align = "right")
+				(vgap = 3px)
+			)
+			(tf
+				(class $PenCalc_Text)
+				(bind text "_baseValue")
+			)
+			(controller $Repeat layout=true
+				(bind count "_values.length")
+				(exprs
+					(tf
+						(class $PenCalc_Text)
+						(bind text "formatFloatingPoint(_values[$index], 0)")
+					)
+				)
+			)
+		)
+		(tf
+			(bind visible "_unit")
+			(class $PenCalc_Text)
+			(alpha = "TC")
+			(bind text "_unit")
+			(style
+				(marginLeft = "6px")
+			)
+		)
+	)
+)
+
+(def element PenCalc_AngleRightItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
 	(scope
 		# Tachibana AP has very weird settings:
 		# It Must be tested
@@ -352,17 +495,17 @@
 	)
 
 	# Always Ricochets
-	(element PenetrationCalculatorSectorItem _offset="-90" _arc=" alwaysRicochetArc" _color=0xFF0000)
-	(element PenetrationCalculatorSectorItem _offset=" 90" _arc="-alwaysRicochetArc" _color=0xFF0000)
+	(element PenCalc_SectorItem _offset="-90" _arc=" alwaysRicochetArc" _color=0xFF0000)
+	(element PenCalc_SectorItem _offset=" 90" _arc="-alwaysRicochetArc" _color=0xFF0000)
 	# Always-Start Ricochets
-	(element PenetrationCalculatorSectorItem _offset="-90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
-	(element PenetrationCalculatorSectorItem _offset=" 90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
+	(element PenCalc_SectorItem _offset="-90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
+	(element PenCalc_SectorItem _offset=" 90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
 	# No Ricochet
-	(element PenetrationCalculatorSectorItem _offset="-90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
+	(element PenCalc_SectorItem _offset="-90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
 
-	(element PenetrationCalculatorLineItem _offset="-90" _angle="0")
-	(element PenetrationCalculatorLineItem _offset="-90" _angle="alwaysRicochetArc")
-	(element PenetrationCalculatorLineItem _offset="-90" _angle="startRicochetArc" _length=50)
+	(element PenCalc_LineItem _offset="-90" _angle="0")
+	(element PenCalc_LineItem _offset="-90" _angle="alwaysRicochetArc")
+	(element PenCalc_LineItem _offset="-90" _angle="startRicochetArc" _length=50)
 
 	(style
 		(position = "absolute")
@@ -370,7 +513,7 @@
 	)
 )
 
-(def element PenetrationCalculatorAngleLeftItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
+(def element PenCalc_AngleLeftItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number)
 	(scope
 		# Tachibana AP has very weird settings:
 		# It Must be tested
@@ -381,17 +524,17 @@
 	)
 
 	# Always Ricochets
-	(element PenetrationCalculatorSectorItem _offset="-90" _arc="-alwaysRicochetArc" _color=0xFF0000)
-	(element PenetrationCalculatorSectorItem _offset=" 90" _arc=" alwaysRicochetArc" _color=0xFF0000)
+	(element PenCalc_SectorItem _offset="-90" _arc="-alwaysRicochetArc" _color=0xFF0000)
+	(element PenCalc_SectorItem _offset=" 90" _arc=" alwaysRicochetArc" _color=0xFF0000)
 	# Always-Start Ricochets
-	(element PenetrationCalculatorSectorItem _offset="-90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
-	(element PenetrationCalculatorSectorItem _offset=" 90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
+	(element PenCalc_SectorItem _offset="-90 - alwaysRicochetArc" _arc="-ricochetAngleArc" _color=0xFFFF00)
+	(element PenCalc_SectorItem _offset=" 90 + alwaysRicochetArc" _arc=" ricochetAngleArc" _color=0xFFFF00)
 	# No Ricochet
-	(element PenetrationCalculatorSectorItem _offset=" 90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
+	(element PenCalc_SectorItem _offset=" 90 + startRicochetArc"  _arc=" noRicochetArc" _color=0x00FF00)
 
-	(element PenetrationCalculatorLineItem _offset="180" _angle="0" _length=50)
-	(element PenetrationCalculatorLineItem _offset="180" _angle="_alwaysRicochet")
-	(element PenetrationCalculatorLineItem _offset="180" _angle="_startRicochet" _length=50)
+	(element PenCalc_LineItem _offset="180" _angle="0" _length=50)
+	(element PenCalc_LineItem _offset="180" _angle="_alwaysRicochet")
+	(element PenCalc_LineItem _offset="180" _angle="_startRicochet" _length=50)
 
 	(style
 		(position = "absolute")
@@ -399,7 +542,7 @@
 	)
 )
 
-(def element PenetrationCalculatorSectorItem(_offset:number=0, _arc:number=0, _color:number=0xFFFFFF)
+(def element PenCalc_SectorItem(_offset:number=0, _arc:number=0, _color:number=0xFFFFFF)
 	(controller $Sector
 		(bind offset "_offset")
 		(bind color "_color")
@@ -407,10 +550,10 @@
 		(bind radius "45")
 		(bind innerRadius "0")
 	)
-	(alpha = 0.7)
+	(alpha = 0.6)
 )
 
-(def element PenetrationCalculatorLineItem(_offset:number, _angle:number, _length:number = 65)
+(def element PenCalc_LineItem(_offset:number, _angle:number, _length:number = 65)
 	(scope
 		(var normOffset:number = "_offset % 360")
 		(var isLeft:bool = "90 <= normOffset && normOffset <= 270 ? true : false")
@@ -441,8 +584,20 @@
 			(bind pivotX "isLeft ? 100% : 0%")
 		)
 		(tf
-			(class $TextIndicator)
+			(class $PenCalc_Text)
 			(bind text "label")
 		)
 	)
+)
+
+(def css $PenCalc_Text()
+	(extends $TextDefaultNM)
+	(extends $FontEnableReadability)
+	(leading = "-3px")
+)
+
+(def css $PenCalc_TextBold()
+	(extends $TextDefaultBoldNM)
+	(extends $FontEnableReadability)
+	(leading = "-3px")
 )
