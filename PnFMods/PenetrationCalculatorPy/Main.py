@@ -7,7 +7,7 @@ try:
 except:
     pass
 
-from math import cos, radians, degrees
+from math import cos, radians, degrees, floor
 
 INF = float('inf')
 INVALID_VALUE = -1
@@ -89,13 +89,12 @@ class PenetrationCalculator(object):
             #utils.logInfo(LOGGER_NAME, 'Error while trying to stop update')
             pass
 
-    def getPenetration(self, ammo):
+    def getPenetration(self, ammo, impactSpeed):
         if ammo.ammoType == 'HE':
             return self._calcHEPenetration(ammo)
         elif ammo.ammoType == 'CS':
             return int(ammo.alphaPiercingCS)
         elif ammo.ammoType == 'AP':
-            impactSpeed = self._getImpactSpeed(ammo)
             return self._calcAPPenetration(ammo, impactSpeed)
         #other ammunitions
         return INVALID_VALUE
@@ -125,23 +124,29 @@ class PenetrationCalculator(object):
         isAP = ammo.ammoType =='AP'
         isRicochetable = ammo.ammoType == 'CS' or isAP
         impactAgnle = self.hoopRanging.pitch
-        penetration = self.getPenetration(ammo)
+        impactSpeed = self.getImpactSpeed(ammo)
+        penetration = self.getPenetration(ammo, impactSpeed)
         return dict(
-            penetration = penetration,
-            startRicochet = ammo.bulletRicochetAt if isRicochetable else INVALID_VALUE,
-            alwaysRicochet = ammo.bulletAlwaysRicochetAt if isRicochetable else INVALID_VALUE,
-            detonatorDelay = ammo.bulletDetonator if isAP else INVALID_VALUE,
-            detonatorThreshold = ammo.bulletDetonatorThreshold if isAP else INVALID_VALUE,
-            impactAngle = degrees(impactAgnle) if not self.isSquadronMode else INVALID_VALUE,
-            apSkipData = self.__getAdditionalAPSkipData(ammo, penetration)
+            penetration         = penetration,
+            startRicochet       = ammo.bulletRicochetAt if isRicochetable else INVALID_VALUE,
+            alwaysRicochet      = ammo.bulletAlwaysRicochetAt if isRicochetable else INVALID_VALUE,
+            detonatorDelay      = ammo.bulletDetonator if isAP else INVALID_VALUE,
+            detonatorThreshold  = ammo.bulletDetonatorThreshold if isAP else INVALID_VALUE,
+            detonatorLength     = impactSpeed * ammo.bulletDetonator if isAP else INVALID_VALUE,
+            overmatch           = self._getOvermatch(ammo) if isRicochetable else INVALID_VALUE,
+            impactAngle         = degrees(impactAgnle) if not self.isSquadronMode else INVALID_VALUE,
+            apSkipData          = self.__getAdditionalAPSkipData(ammo, penetration),
         )
+    
+    def _getOvermatch(self, ammo):
+        return floor(ammo.bulletDiametr * 1000 / 14.3)
     
     def _getImpactAngle(self, ammo):
         normalizeAngle = radians(ammo.bulletCapNormalizeMaxAngle)
         trajAngle = abs(self.hoopRanging.pitch)
         return max(0, trajAngle - normalizeAngle)
 
-    def _getImpactSpeed(self, ammo):
+    def getImpactSpeed(self, ammo):
         if self.isSquadronMode:
             return ammo.bulletSpeed
         
