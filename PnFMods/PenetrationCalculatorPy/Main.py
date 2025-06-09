@@ -89,24 +89,24 @@ class PenetrationCalculator(object):
             #utils.logInfo(LOGGER_NAME, 'Error while trying to stop update')
             pass
 
-    def getPenetration(self, ammo, impactSpeed):
+    def _calcPenetration(self, ammo, impactSpeed):
         if ammo.ammoType == 'HE':
-            return self._calcHEPenetration(ammo)
+            return self.__calcHEPenetration(ammo)
         elif ammo.ammoType == 'CS':
             return int(ammo.alphaPiercingCS)
         elif ammo.ammoType == 'AP':
-            return self._calcAPPenetration(ammo, impactSpeed)
-        #other ammunitions
+            return self.__calcAPPenetration(ammo, impactSpeed)
+        # Other Ammunitions
         return INVALID_VALUE
 
-    def _calcAPPenetration(self, ammo, impactSpeed):
+    def __calcAPPenetration(self, ammo, impactSpeed):
         krupp = battle.getBulletKrupp(ammo, self.modifiers)
         raw = krupp * (ammo.bulletMass * impactSpeed * impactSpeed) ** 0.69 * ammo.bulletDiametr ** (-1.07) * 0.0000001
         if self.isSquadronMode:
             return raw
-        return raw * cos(self._getImpactAngle(ammo))
+        return raw * cos(self.__calcImpactAngle(ammo))
 
-    def _calcHEPenetration(self, ammo):
+    def __calcHEPenetration(self, ammo):
         penCoeff = 1.0
         if ammo.typeinfo.species == constants.ProjectileTypes.ARTILLERY:
             penCoeff = self.modifiers.GMPenetrationCoeffHE
@@ -124,8 +124,8 @@ class PenetrationCalculator(object):
         isAP = ammo.ammoType =='AP'
         isRicochetable = ammo.ammoType == 'CS' or isAP
         impactAgnle = self.hoopRanging.pitch
-        impactSpeed = self.getImpactSpeed(ammo)
-        penetration = self.getPenetration(ammo, impactSpeed)
+        impactSpeed = self._calcImpactSpeed(ammo)
+        penetration = self._calcPenetration(ammo, impactSpeed)
         return dict(
             penetration         = penetration,
             startRicochet       = ammo.bulletRicochetAt if isRicochetable else INVALID_VALUE,
@@ -133,22 +133,22 @@ class PenetrationCalculator(object):
             detonatorDelay      = ammo.bulletDetonator if isAP else INVALID_VALUE,
             detonatorThreshold  = ammo.bulletDetonatorThreshold if isAP else INVALID_VALUE,
             detonatorLength     = impactSpeed * ammo.bulletDetonator if isAP else INVALID_VALUE,
-            overmatch           = self._getOvermatch(ammo) if isRicochetable else INVALID_VALUE,
+            overmatch           = self._calcOvermatch(ammo) if isRicochetable else INVALID_VALUE,
             impactAngle         = degrees(impactAgnle) if not self.isSquadronMode else INVALID_VALUE,
-            apSkipData          = self.__getAdditionalAPSkipData(ammo, penetration),
+            apSkipData          = self._calcAdditionalAPSkipData(ammo, penetration),
         )
     
-    def _getOvermatch(self, ammo):
+    def _calcOvermatch(self, ammo):
         return floor(ammo.bulletDiametr * 1000 / 14.3)
     
-    def _getImpactAngle(self, ammo):
+    def __calcImpactAngle(self, ammo):
         normalizeAngle = radians(ammo.bulletCapNormalizeMaxAngle)
         trajAngle = abs(self.hoopRanging.pitch)
         return max(0, trajAngle - normalizeAngle)
 
-    def getImpactSpeed(self, ammo):
+    def _calcImpactSpeed(self, ammo):
         if self.isSquadronMode:
-            return ammo.bulletSpeed
+            return ammo.bulletSpeed if ammo.ammoType =='AP' else INVALID_VALUE
         
         hoopRanging = self.hoopRanging
         gunPos = hoopRanging.gunPos
@@ -157,10 +157,9 @@ class PenetrationCalculator(object):
             impactSpeed = battle.getAmmoImpactSpeed(ammo, gunPos, gunDir)
             if impactSpeed is not None:
                 return impactSpeed
-        #utils.logError(LOGGER_NAME, 'Failed to calculate speed: ammo: {}, gunPos: {}, gunDir: {}'.format(ammo, gunPos, gunDir))
-        return INF
+        return INVALID_VALUE
     
-    def __getAdditionalAPSkipData(self, ammo, pen):
+    def _calcAdditionalAPSkipData(self, ammo, pen):
         """
         None | dict
         """
