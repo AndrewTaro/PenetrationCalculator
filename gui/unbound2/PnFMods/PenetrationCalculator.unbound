@@ -119,7 +119,7 @@
 		# For Rage Mode Gauge and Offset
 		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
 		(var selfVehicleEntity:gfx = "selfVehicleWatcher.entity" (event "selfVehicleWatcher.event"))
-		(var vehicleID:number = "selfVehicleEntity ? selfVehicleEntity.vehicle.id : 0" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
+		(var vehicleID:number = "selfVehicleEntity && selfVehicleEntity.vehicle &&  ? selfVehicleEntity.vehicle.id : 0" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
 
 		(var rageModeWatcher:gfx = "$datahub.getPrimWatcher(CC.rageMode, vehicleID)")
 		(var rageModeEntity:gfx = "rageModeWatcher.entity" (event "rageModeWatcher.event"))
@@ -394,16 +394,11 @@
 		(align = "middle")
 		(width = 100%)
 	)
-	(block
+	(tf
+		(bind text "_title")
+		(class $PenCalc_TextBold)
 		(style
 			(width = 70%)
-		)
-		(tf
-			(bind text "_title")
-			(class $PenCalc_TextBold)
-			(style
-				(width = 100%)
-			)
 		)
 	)
 	(hblock
@@ -414,6 +409,10 @@
 		(tf
 			(class $PenCalc_Text)
 			(bind text "_value")
+			(style
+				(width = 100%)
+				(textAlign = "right")
+			)
 		)
 		(tf
 			(bind visible "_unit")
@@ -421,7 +420,7 @@
 			(alpha = "TC")
 			(bind text "_unit")
 			(style
-				(marginLeft = "6px")
+				(marginLeft = 6px)
 			)
 		)
 	)
@@ -436,16 +435,11 @@
 		(align = "middle")
 		(width = 100%)
 	)
-	(block
+	(tf
+		(bind text "_title")
+		(class $PenCalc_TextBold)
 		(style
 			(width = 70%)
-		)
-		(tf
-			(bind text "_title")
-			(class $PenCalc_TextBold)
-			(style
-				(width = 100%)
-			)
 		)
 	)
 	(hblock
@@ -457,6 +451,7 @@
 			(style
 				(align = "right")
 				(vgap = 3px)
+				(width = 100%)
 			)
 			(tf
 				(class $PenCalc_Text)
@@ -468,6 +463,14 @@
 					(tf
 						(class $PenCalc_Text)
 						(bind text "formatFloatingPoint(_values[$index], 0)")
+						(style
+							(width = 100%)
+							(textAlign = "right")
+						)
+					)
+					(style
+						(width = 100%)
+						(align = "middle|right")
 					)
 				)
 			)
