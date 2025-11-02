@@ -119,7 +119,7 @@
 		# For Rage Mode Gauge and Offset
 		(var selfVehicleWatcher:gfx = "$datahub.getFirstWatcher(CC.selfVehicle)")
 		(var selfVehicleEntity:gfx = "selfVehicleWatcher.entity" (event "selfVehicleWatcher.event"))
-		(var vehicleID:number = "selfVehicleEntity && selfVehicleEntity.vehicle &&  ? selfVehicleEntity.vehicle.id : 0" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
+		(var vehicleID:number = "selfVehicleEntity && selfVehicleEntity.vehicle ? selfVehicleEntity.vehicle.id : 0" (event "selfVehicleEntity.evAdded") (event "selfVehicleEntity.evRemoved"))
 
 		(var rageModeWatcher:gfx = "$datahub.getPrimWatcher(CC.rageMode, vehicleID)")
 		(var rageModeEntity:gfx = "rageModeWatcher.entity" (event "rageModeWatcher.event"))
