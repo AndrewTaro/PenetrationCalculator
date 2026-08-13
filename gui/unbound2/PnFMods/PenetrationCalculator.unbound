@@ -1,5 +1,4 @@
 (def constant PENCALC_COMPONENT_KEY 'modPenetrationCalculator')
-(def constant TT_PENCALCULATOR_INSTALLED true) #for modconfig
 
 (def constant PenCalc_FONT_COLORS [
 	"FONT_CLASS_TO_COLOR['$FontColorDefault']",
@@ -55,15 +54,15 @@
 		(var altVision:bool = "cameraEntity.camera.altVision" (event "cameraEntity.camera.evAltVisionChanged"))
 
 		# UserPrefs
-		(macro TT_GET_USERPREF)
-
-		(macro TT_GET_PREF_NUMBER _varName="'heightOffset'" 				_pref="PENCALC_PREFS.HEIGHT_OFFSET")
-		(macro TT_GET_PREF_NUMBER _varName="'fontStylePrefIndex'" 			_pref="PENCALC_PREFS.FONT_STYLE_INDEX")
-
-		(macro TT_GET_PREF_BOOL   _varName="'isImpactAngleAlwaysVisible'" _pref="PENCALC_PREFS.IMPACT_ANGLE_ALWAYS_VISIBLE")
+		(macro TT_GET_PREF _varName="'heightOffsetPref'" _key="'penCalc.heightOffset'")
+		(var heightOffset:number = "null != heightOffsetPref && null != heightOffsetPref.value ? heightOffsetPref.value : 1")
+		(macro TT_GET_PREF _varName="'impactAnglePref'" _key="'penCalc.impactAngleAlwaysVisible'")
+		(var isImpactAngleAlwaysVisible:bool = "null != impactAnglePref && null != impactAnglePref.value ? impactAnglePref.value : false")
 
 		# Font style
-		(var fontStyleIndex:number = "fontStylePrefIndex < PenCalc_FONT_COLORS.length ? fontStylePrefIndex : 0")
+		(macro TT_GET_PREF _varName="'fontStylePref'" _key="'penCalc.fontStyleIndex'")
+		(var fontStyleValue:number = "null != fontStylePref && null != fontStylePref.value ? fontStylePref.value : 0")
+		(var fontStyleIndex:number = "fontStyleValue < PenCalc_FONT_COLORS.length ? fontStyleValue : 0")
 		(var fontColor:number = "PenCalc_FONT_COLORS[fontStyleIndex]")
 
 		# Pen Data Entity
@@ -188,7 +187,6 @@
 				_detonatorLength	= "detonatorLength"
 				_overmatch			= "overmatch"
 				_apSkipData			= "apSkipData"
-				_userPrefsNum		= "_userPrefsNum"
 			)
 			(macro DEFAULT_TOOLTIP_BEHAVIOUR "0")
 		)
@@ -241,7 +239,7 @@
 	)
 )
 
-(def element PenCalc_TooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number, _detonatorLength:number, _overmatch:number, _apSkipData:dict, _userPrefsNum:gfx=null)
+(def element PenCalc_TooltipItem(_alwaysRicochet:number, _startRicochet:number, _impactAngle:number, _detonatorDelay:number, _detonatorThreshold:number, _detonatorLength:number, _overmatch:number, _apSkipData:dict)
 	(scope
 		(var isRicochetVisible:bool = "_alwaysRicochet > 0 && _startRicochet > 0")
 		(var isImpactAngleVisible:bool = "_impactAngle > 0")
