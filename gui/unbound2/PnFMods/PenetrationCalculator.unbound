@@ -1,13 +1,5 @@
 (def constant PENCALC_COMPONENT_KEY 'modPenetrationCalculator')
 
-(def constant PenCalc_FONT_COLORS [
-	"FONT_CLASS_TO_COLOR['$FontColorDefault']",
-	"FONT_CLASS_TO_COLOR['$FontColorBuoyancy']",
-	"FONT_CLASS_TO_COLOR['$FontColorGolden']",
-	"FONT_CLASS_TO_COLOR['$FontColorGreen']",
-	"FONT_CLASS_TO_COLOR['$FontColorOrange']",
-])
-
 (def constant PenCalc_INVALID_VALUE -1)
 
 (def element PenetrationCalculator() layout=true
@@ -59,11 +51,11 @@
 		(macro TT_GET_PREF _varName="'impactAnglePref'" _key="'penCalc.impactAngleAlwaysVisible'")
 		(var isImpactAngleAlwaysVisible:bool = "null != impactAnglePref && null != impactAnglePref.value ? impactAnglePref.value : false")
 
-		# Font style
-		(macro TT_GET_PREF _varName="'fontStylePref'" _key="'penCalc.fontStyleIndex'")
-		(var fontStyleValue:number = "null != fontStylePref && null != fontStylePref.value ? fontStylePref.value : 0")
-		(var fontStyleIndex:number = "fontStyleValue < PenCalc_FONT_COLORS.length ? fontStyleValue : 0")
-		(var fontColor:number = "PenCalc_FONT_COLORS[fontStyleIndex]")
+		# Font colour -- a packed `color` setting, so `value` binds straight through to the ARGB target;
+		# never recompute a packed colour in the view (>= 2^31 overflows).  The 5-entry
+		# PenCalc_FONT_COLORS palette it used to index is dead, not renamed.
+		(macro TT_GET_PREF _varName="'fontColorPref'" _key="'penCalc.fontColor'")
+		(var fontColor:number = "null != fontColorPref && null != fontColorPref.value ? fontColorPref.value : 0xFFEEEEEE")
 
 		# Pen Data Entity
 		(var penEntityWatcher:gfx = "$datahub.getPrimWatcher(CC.mods_DataComponent, PENCALC_COMPONENT_KEY)")
