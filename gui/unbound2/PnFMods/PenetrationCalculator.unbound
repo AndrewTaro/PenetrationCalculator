@@ -48,13 +48,13 @@
 		# UserPrefs
 		(macro TT_GET_PREF _varName="'heightOffsetPref'" _key="'penCalc.rowIndex'")
 		(var heightOffset:number = "null != heightOffsetPref && null != heightOffsetPref.value ? heightOffsetPref.value : 1")
-		(macro TT_GET_PREF _varName="'impactAnglePref'" _key="'penCalc.impactAngleAlwaysVisible'")
+		(macro TT_GET_PREF _varName="'impactAnglePref'" _key="'penCalc.alwaysShowImpactAngle'")
 		(var isImpactAngleAlwaysVisible:bool = "null != impactAnglePref && null != impactAnglePref.value ? impactAnglePref.value : false")
 
 		# Font colour -- a packed `color` setting, so `value` binds straight through to the ARGB target;
 		# never recompute a packed colour in the view (>= 2^31 overflows).  The 5-entry
 		# PenCalc_FONT_COLORS palette it used to index is dead, not renamed.
-		(macro TT_GET_PREF _varName="'fontColorPref'" _key="'penCalc.color'")
+		(macro TT_GET_PREF _varName="'fontColorPref'" _key="'penCalc.font.color'")
 		(var fontColor:number = "null != fontColorPref && null != fontColorPref.value ? fontColorPref.value : 0xFFEEEEEE")
 
 		# Pen Data Entity
