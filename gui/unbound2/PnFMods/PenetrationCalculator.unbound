@@ -255,7 +255,6 @@
 		(var isInformationAvailable:bool = "(isRicochetVisible || isImpactAngleVisible || isDetonatorVisible)")
 
 		# Translations
-		(macro TT_GET_LANGUAGE_INDEX)
 		(macro TT_GET_TRANSLATION _varName="'ricochetAngleTitle'" _key="'IDS_TT_RICOCHET_ANGLES'")
 		(macro TT_GET_TRANSLATION _varName="'impactAngleTitle'" _key="'IDS_TT_IMPACT_ANGLE'")
 		(macro TT_GET_TRANSLATION _varName="'fuseDelayTitle'" _key="'IDS_TT_FUSE_DELAY'")
