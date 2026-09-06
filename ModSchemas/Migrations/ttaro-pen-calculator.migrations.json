@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 4,
+  "opVocabularyVersion": 1,
+  "slug": "pen-calculator",
+  "migrations": [
+    {
+      "version": 1,
+      "description": "flat keys → dotted ancestry keys; slider step index → value; palette index → packed ARGB",
+      "ops": [
+        {
+          "op": "rename",
+          "from": "penCalcFontStyleIndex",
+          "to": "penCalc.font.color"
+        },
+        {
+          "op": "rename",
+          "from": "penCalcHeightOffset",
+          "to": "penCalc.rowIndex"
+        },
+        {
+          "op": "rename",
+          "from": "penCalcImpactAngleAlwaysVisible",
+          "to": "penCalc.alwaysShowImpactAngle"
+        },
+        {
+          "op": "transform",
+          "from": "penCalc.rowIndex",
+          "to": "penCalc.rowIndex",
+          "transform": "stepIndex",
+          "args": {
+            "min": 1,
+            "step": 1
+          }
+        },
+        {
+          "op": "transform",
+          "from": "penCalc.font.color",
+          "to": "penCalc.font.color",
+          "transform": "paletteIndex",
+          "args": {
+            "palette": [
+              15658734,
+              1296887,
+              16764006,
+              5040298,
+              16750899
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
