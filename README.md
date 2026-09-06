@@ -15,7 +15,7 @@ This modification displays the penetration capability of your selected armament 
   - Some visualizations will help you to understand it as well.
  
 ## Requirements
-- [TTaro Mod Config](../../../TTaroModConfig): You must install this config in order to use the mod.
+- [TTaro Mod Config](../../../TTaroModUtils): You must install this config in order to use the mod.
 
 Resetting to default is easy - Just click the gear icon next to each option.
 So don't hesitate and try various settings!
