@@ -255,13 +255,13 @@
 		(var isInformationAvailable:bool = "(isRicochetVisible || isImpactAngleVisible || isDetonatorVisible)")
 
 		# Translations
-		(macro TT_GET_TRANSLATION _varName="'ricochetAngleTitle'" _key="'IDS_TT_RICOCHET_ANGLES'")
-		(macro TT_GET_TRANSLATION _varName="'impactAngleTitle'" _key="'IDS_TT_IMPACT_ANGLE'")
-		(macro TT_GET_TRANSLATION _varName="'fuseDelayTitle'" _key="'IDS_TT_FUSE_DELAY'")
-		(macro TT_GET_TRANSLATION _varName="'fuseThresholdTitle'" _key="'IDS_TT_FUSE_THRESHOLD'")
-		(macro TT_GET_TRANSLATION _varName="'fuseDistanceTitle'" _key="'IDS_TT_FUSE_DISTANCE'")
-		(macro TT_GET_TRANSLATION _varName="'overmatchTitle'" _key="'IDS_TT_OVERMATCH'")
-		(macro TT_GET_TRANSLATION _varName="'noInfoTitle'" _key="'IDS_TT_NO_INFORMATION'")
+		(var ricochetAngleTitle:str = "tr('IDS_TT_RICOCHET_ANGLES')")
+		(var impactAngleTitle:str = "tr('IDS_TT_IMPACT_ANGLE')")
+		(var fuseDelayTitle:str = "tr('IDS_TT_FUSE_DELAY')")
+		(var fuseThresholdTitle:str = "tr('IDS_TT_FUSE_THRESHOLD')")
+		(var fuseDistanceTitle:str = "tr('IDS_TT_FUSE_DISTANCE')")
+		(var overmatchTitle:str = "tr('IDS_TT_OVERMATCH')")
+		(var noInfoTitle:str = "tr('IDS_TT_NO_INFORMATION')")
 	)
 
 	(style
