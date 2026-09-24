@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "id": "cmtkswuwt000cv014sewj7d42",
   "author": "ttaro",
   "modName": "Pen Calculator",
@@ -9,13 +9,14 @@
     {
       "kind": "group",
       "key": "cmtktam99009vv0d4iwea53my",
+      "display": "section",
       "label": "IDS_TT_TITLE_GENERAL",
       "collapse": "expanded",
       "children": [
         {
           "kind": "group",
           "key": "cmt4us0h2001av0rwp6z1o3yz",
-          "aggregate": "inline",
+          "display": "transparent",
           "children": [
             {
               "kind": "setting",
